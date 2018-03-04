@@ -1,0 +1,21 @@
+tolerance  0.1
+
+filetype  xyz
+
+output  MixtureAEM.xyz
+
+structure  chain1.xyz
+  number  2314
+  inside box      0.0000    0.0000    0.0000    400.0000  400.0000  400.0000
+end structure 
+
+structure  OH.xyz
+  number  37024
+  inside box      0.0000    0.0000    0.0000    400.0000  400.0000  400.0000
+end structure 
+
+structure  W.xyz
+  number  74128
+  inside box      0.0000    0.0000    0.0000    400.0000  400.0000  400.0000
+end structure 
+
