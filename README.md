@@ -12,7 +12,7 @@ However, it requires Packmol.
 
 HOWTO:
 
-Write atoms in necessary_beads.py
+Create all atoms you want to use in necessary_beads.py
 
 Use step1.py to create single molecules and their bond/angle/dihedral/impropler list files.
 
