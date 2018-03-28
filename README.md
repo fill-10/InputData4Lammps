@@ -2,7 +2,9 @@
 
 This is a very simple tool to generate the lammps input data file for md/dpd simulation.
 
-It is only dependent on the standard python3 environment.
+User defines everything. All constrains are defined manually.
+
+It is only dependent on the standard python3 environment. Tested on python3.6.
 
 No py plug-ins are required.
 
