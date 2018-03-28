@@ -1,10 +1,10 @@
 # DPDLammpsInput
 
-This is a very simple tool to generate the lammps input data file for md/dpd simulation.
+This is a very simple tool to generate the lammps input data file for md/dpd simulations.
 
 User defines everything. All constrains are defined manually.
 
-It is only dependent on the standard python3 environment. Tested on python3.6.
+It is only dependent on the standard python3 environment. Tested on python3.6 and python2.7.
 
 No py plug-ins are required.
 
