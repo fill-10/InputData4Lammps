@@ -18,6 +18,14 @@ Use step1.py to create single molecules and their bond/angle/dihedral/impropler 
 
 Use step2.py to generate the box by Packmol, and write the lammps data file. 
 
+Existing problems:
+
+Masses are defined as 1.0 in the lammps data file. Please update masses in lammps input script.
+
+In xyz files, atom names are stored as real names but not the numbers as in lammps. 
+
+This is for the visualization purposes.
+
 ############
 Have fun!
 
