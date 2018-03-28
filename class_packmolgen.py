@@ -49,6 +49,7 @@ class packmolgen:
 			'%10.4f' %self.xlo + '%10.4f' %self.ylo +'%10.4f' %self.zlo +2*' ' +\
 			'%10.4f' %self.xhi + '%10.4f' %self.yhi + '%10.4f' %self.zhi +'\n')
 		self.packmolf.write('end structure \n\n')
+                # TODO: put diff mol into diff regions is not supported. plz wait for next version.
 	
 	def runpackmol(self, packmolcommand):
 		fullcommand = packmolcommand+'<'+self.inpfilename

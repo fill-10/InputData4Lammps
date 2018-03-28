@@ -1,41 +1,16 @@
-#! /usr/bin/python
 # step1.py
 # generate xyz, bond, angle for a single chain
 
-from class_bead import bead
+#from class_bead import bead
 from class_monomer import monomer
 from class_block import block
 from class_polymer import polymer
-from class_data import data
-from class_packmolgen import packmolgen
-import subprocess
 
 # NOTE 1
 # create beads
 # b= bead(Name, coordinates, namenumber)
-
-b1 = bead('S', [0., 1.0, 0.],2)
-
-b2 = bead('B', [0., 0.0, 0.],1)
-
-b1p = bead('S', [0.,-1.0, 0.],2)
-
-b4 = bead('M', [0, -2.0, 0.],4)
-
-b5 = bead('A', [0.,-3.0, 0.],5)
-
-#
-
-#
-
-b3 = bead('E',[0.0, 0.0, 0.0], 3)
-
-#
-
-b6 = bead('O', [0., 0., 0.], 6)
-
-b7 = bead('W', [0., 0., 0.],7)
-
+# beads in necessary_beads.py
+from necessary_beads import *
 
 # NOTE 2: define monomer
 # m1=monomer(Name, mon index, beadthread)
@@ -100,87 +75,19 @@ blocklist1 = [ bk1, bk2, bk3 ]
 p1 = polymer('p1', blocklist1)
 
 
-# write three files
-
 # write the xyz file of chain
 p1.writexyz('chain1.xyz')
 
 
 # write the bond file
-# p1.writebond(filename)
-
 p1.writebond('bond.x')
 
 # write the angle file
-# p1.writeangle(filename)
-
 p1.writeangle('angle.x')
 
-
+# write the dihedral file
 p1.writedihedral('dihedral.x')
 
+# write the improper file
 p1.writeimproper('improper.x')
 
-
-# prepare packmol input file
-# NOTE: One can set box dimensions here,  for example.
-box = [400., 400., 400.]
-# NOTE: components and numbers
-all_molecules = [   {'chain': 'chain1.xyz','bond': 'bond.x', 'angle': 'angle.x', 'Natom' : 3 , 'dihedral': 'dihedral.x', 'improper': 'improper.x' },  \
-                    { 'chain': 'OH.xyz', 'Natom':48} ,\
-                    {'chain':'W.xyz', 'Natom': 10 }   ]
-
-
-#components=[['chain1.xyz',3], ['OH.xyz', 48], ['W.xyz', 10]]
-
-# packmolAEM.inp is the packmol input
-pack = packmolgen( boxsize = box, molecules = all_molecules, filetype = 'xyz' )
-
-pack.packmolinpgen('MixtureAEM.xyz')
-
-# run packmol
-# NOTE: modify the packmol directory here
-subprocess.call('/opt/packmol/packmol<packmol.inp', shell = True)
-
-# run step2
-
-totalbeadlist = [b1, b2, b3, b4, b5, b6, b7]
-
-# initialize d1
-# (output filename, xyz of mixture, xyz of single chain, bond per chain, angle per chain, packmol input)
-d1 = data('SEBS1TMA_DPD.data')
-
-d1.load_mixture('MixtureAEM.xyz')
-
-
-d1.load_all_molecules(*all_molecules)
-
-
-
-
-d1.xlo = 0.
-d1.xhi = box[0]
-d1.ylo = 0.
-d1.yhi = box[1]
-d1.zlo = 0.
-d1.zhi = box[2]
-
-# One can set types of atom, bond, angle, dihedral, improper
-# NOTE
-d1.tatom = 7
-d1.tbond = 6
-d1.tangle = 6
-d1.tdihedral = 4
-d1.timproper = 1
-d1.update_totalnumber()
-
-d1.writehead()
-
-# writeatom(beadnamelist) outputs the atom cooridnates.
-
-d1.writeatom(totalbeadlist)
-
-d1.writebond()
-d1.writeangle()
-d1.writedihedral()
-d1.writeimproper()
