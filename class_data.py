@@ -3,15 +3,17 @@ from class_polymer import polymer
 class data:
     def __init__(self,outputfilename):
         self.nsys = 0 # total beads
-        self.nm = 0 # beads per chain
-        self.nmol = 0 # number of chains
-        self.nbond = 0 # bond per chain
-        self.nangle = 0 # angle per chain
-        self.ndihedral = 0 # dihedral per chain
+        #self.nm = 0 # beads per chain, useless
+        #self.nmol = 0 # number of chains, useless
+        self.nbond = 0 # bond
+        self.nangle = 0 # angle
+        self.ndihedral = 0 # dihedral
         self.nimproper = 0
+
+        self.all_molecule_list = []
         # set these values manually. No. of types 
         self.tatom = 3
-	self.tbond = 5
+        self.tbond = 5
         self.tangle = 5
         self.tdihedral = 0
         self.timproper = 0
@@ -27,27 +29,110 @@ class data:
         self.output = open(outputfilename, 'w+')
         #
 
-        # read total No. of beads from mixture.xyz. it is in its first line.
-    def load_mixture(self, mixturexyzsourcefile=None):
-        if mixturexyzsourcefile:
-            self.mixture = open(mixturexyzsourcefile, 'r')
-            # read nsys from mixture.xyz
-            self.mixture.seek(0)
-            self.mixturefirstline = self.mixture.readline()
-            self.nsys = int(self.mixturefirstline.split()[0])
-        else: self.mixture = None
-            
-            # read No. of beads per chain from chain.xyz
     def load_chain(self, chainxyzsourcefile):
-        if chainxyzsourcefile:
-            self.chain = open(chainxyzsourcefile, 'r')
+        try:
+            chain = open(chainxyzsourcefile, 'r')
             #read nm from chain.xyz
-            self.chain.seek(0)
-            self.chainfirstline = self.chain.readline()
-            self.nm = int(self.chainfirstline.split()[0])
+            chain.seek(0)
+            chainfirstline = chain.readline()
+            number_of_atoms = int(chainfirstline.split()[0])
             #self.chain.close()
-        else: self.chain = None
-	    
+            return (number_of_atoms, chain)
+        except:
+            return (0, None)
+    def load_bond(self, bondsourcefile):
+        # read No. of bonds per chain from bond file
+        try:
+        # read all bonds in chain
+            bond = open(bondsourcefile, 'r')
+            # calculate nbond, bonds per chain
+            bond.seek(0)
+            bondlist = bond.readlines()
+            nbond = len(bondlist)
+            return (nbond, bondlist)
+        except:
+            return (0, None)
+    def load_angle(self,anglesourcefile):
+        try:
+            angle = open(anglesourcefile, 'r')
+            angle.seek(0)
+            anglelist = angle.readlines()
+            nangle =len(anglelist)
+            return ( nangle, anglelist)
+        except:
+            return (0, None)
+
+    def load_dihedral(self, dihedralsourcefile):
+        try:
+            dihedral = open(dihedralsourcefile, 'r')
+            dihedral.seek(0)
+            dihedrallist = dihedral.readlines()
+            ndihedral = len(dihedrallist)
+            return (ndihedral , dihedrallist)
+        except:
+            return (0, None)
+
+    def load_improper(self, impropersourcefile):
+        try:
+            improper = open(impropersourcefile, 'r')
+            improper.seek(0)
+            improperlist = improper.readlines()
+            nimproper = len(improperlist)
+            return (nimproper, improperlist)
+        except:
+            return (0, None)
+
+
+    def read_single_molecule(self, **kwargs):
+        chain_filename = None
+        bond_filename = None
+        angle_filename = None
+        dihedral_filename = None
+        improper_filename = None
+        natom = 0
+        for keywords in kwargs.items():
+            if keywords[0] == 'chain' or keywords[0] =='molecule':
+                chain_filename = keywords[1]
+            if keywords[0] == 'bond':
+                bond_filename = keywords[1]
+            if keywords[0] == 'angle':
+                angle_filename = keywords[1]
+            if keywords[0] == 'dihedral' :
+                dihedral_filename = keywords[1]
+            if keywords[0] == 'improper':
+                improper_filename = keywords[1]
+            if keywords[0] == 'Natom' or keywords[0] == 'natom' or keywords[0] =='number_of_atoms':
+                natom = keywords[1]
+        return (natom, chain_filename, bond_filename, angle_filename, dihedral_filename, improper_filename)
+
+    def load_all_molecules(self, *some_molecules):
+        for molecule in some_molecules:
+            self.all_molecule_list.append( self.read_single_molecule(**molecule) )
+    
+    def update_totalnumber(self):
+        for molecule in self.all_molecule_list:
+            self.nangle += self.load_angle(molecule[3])[0] * molecule[0]
+            self.nbond +=  self.load_bond(molecule[2])[0] * molecule[0]
+            self.ndihedral += self.load_dihedral(molecule[4])[0] * molecule[0]
+            self.nimproper += self.load_improper(molecule[5])[0] * molecule[0]
+            # no need to update self.nsys
+            # it's from mixture.xyz
+
+
+
+
+
+
+    def load_mixture(self, mixturexyzsourcefile):
+        self.mixture = open(mixturexyzsourcefile, 'r')
+        # read nsys from mixture.xyz
+        self.mixture.seek(0)
+        self.mixturefirstline = self.mixture.readline()
+        self.nsys = int(self.mixturefirstline.split()[0])
+
+
+
+    # useless in this version
     def load_nmol(self, packmolinput):
         # read No. of chains from packmol input
         if packmolinput:
@@ -64,42 +149,17 @@ class data:
         else:
             self.packmol = None
 
-    def load_bond(self, bondsourcefile):
-        # read No. of bonds per chain from bond file
-        if bondsourcefile:
-        # read all bonds in chain
-            self.bond = open(bondsourcefile, 'r')
-            # calculate nbond, bonds per chain
-            self.bond.seek(0)
-            self.bondlist = self.bond.readlines()
-            self.nbond = len(self.bondlist)
-        else: self.bond = None
         
-    def load_angle(self,anglesourcefile):
-        # read No. of angles per chain from angle file
-        if anglesourcefile:
-            self.angle = open(anglesourcefile, 'r')
-            self.angle.seek(0)
-            self.anglelist = self.angle.readlines()
-            self.nangle =len(self.anglelist)
-	else: self.angle = None
-    def load_dihedral(self, dihedralsourcefile):
-        if dihedralsourcefile:
-            self.dihedral = open(dihedralsourcefile, 'r+')
-            self.dihedral.seek(0)
-            self.dihedrallist = self.dihedral.readlines()
-            self.ndihedral = len(self.dihedrallist)
-        else: self.dihedral = None
     
     # write the head lines of lammps data.
     def writehead(self):
         # some parameters 
         self.output.write('LAMMPS Description \n\n')
         self.output.write(4*' '+ '%8d' %self.nsys + 4*' '+'atoms\n')
-        self.output.write(4*' '+ '%8d' %(self.nbond*self.nmol) + 4*' '+'bonds\n')
-        self.output.write(4*' '+ '%8d' %(self.nangle*self.nmol) + 4*' '+'angles\n')
-        self.output.write(4*' '+ '%8d' %(self.ndihedral*self.nmol) + 4*' '+'dihedrals\n')
-        self.output.write(4*' '+ '%8d' %(self.nimproper*self.nmol) + 4*' '+'impropers\n\n')
+        self.output.write(4*' '+ '%8d' %(self.nbond) + 4*' '+'bonds\n')
+        self.output.write(4*' '+ '%8d' %(self.nangle) + 4*' '+'angles\n')
+        self.output.write(4*' '+ '%8d' %(self.ndihedral) + 4*' '+'dihedrals\n')
+        self.output.write(4*' '+ '%8d' %(self.nimproper) + 4*' '+'impropers\n\n')
         self.output.write(4*' '+ '%8d' %self.tatom + 4*' '+'atom types\n')
         self.output.write(4*' '+ '%8d' %self.tbond + 4*' '+'bond types\n')
         self.output.write(4*' '+ '%8d' %self.tangle + 4*' '+'angle types\n')
@@ -120,66 +180,147 @@ class data:
         self.mixture.seek(0)
         self.mixture.readline()
         self.mixture.readline()
-        for i in range(0, self.nmol):
-            for j in range(0, self.nm):
-                atomnamenumber = 0 # claim atom index
-                cl= self.mixture.readline().split() # currentline
-                # translate:
-                for beadbead in bnlist:
-                    if cl[0] == beadbead.name:
-                        atomnamenumber = beadbead.tpnumber
-                        break
-                self.output.write('%8d' %(i*self.nm+j+1) + ' ' + '%8d' %(i+1) +2*' ' + '%4d' %atomnamenumber \
-                +' '+'    0.0000'+' ' + '%11.4f' %float(cl[1]) + '%11.4f' %float(cl[2]) + '%11.4f' %float(cl[3]) + '\n')
-        # then, need to write the water and OH beads~~~ 
-        for i in range(self.nmol*self.nm, self.nsys):
-            atomnamenumber = 0
-            cl = self.mixture.readline().split()
-            for beadbead in bnlist:
-                if cl[0] == beadbead.name:
-                    atomnamenumber = beadbead.tpnumber
-                    break
-            self.output.write('%8d' %(i+1) + ' ' + '%8d' %(self.nmol + i-self.nmol*self.nm+1) +2*' ' + '%4d' %atomnamenumber \
-            +' '+'    0.0000'+' ' + '%11.4f' %float(cl[1]) + '%11.4f' %float(cl[2]) + '%11.4f' %float(cl[3]) + '\n')
+        num_prev_mol = 0
+        num_prev_atom = 0
+        for molecule in self.all_molecule_list:
+            natom_per_chain = int( self.load_chain( molecule[1] )[0]   ) # number of atoms per chain
+            print(molecule)
+            for mol_num_counter in range(0, molecule[0]): # loop over a single type of molecule
+                for j in range(0, natom_per_chain ) :
+                    atomnamenumber = 0 # claim atom index
+                    cl= self.mixture.readline().split() # currentline
+                    #
+                    # translate:
+                    for beadbead in bnlist:
+                        if cl[0] == beadbead.name:
+                            atomnamenumber = beadbead.tpnumber
+                            break
+                    #
+                    self.output.write('%8d' %(num_prev_atom + mol_num_counter*natom_per_chain +j+1) + ' ' \
+                    + '%8d' %(num_prev_mol+mol_num_counter+1) +2*' ' \
+                    + '%4d' %atomnamenumber  +' '\
+                    +'    0.0000'+' ' \
+                    + '%11.4f' %float(cl[1]) + '%11.4f' %float(cl[2]) + '%11.4f' %float(cl[3]) + '\n')
+            
+            num_prev_mol  += molecule[0]
+            num_prev_atom += molecule[0] * natom_per_chain
+            try: del atomnamenumber
+            except: pass
+            #
+
         self.output.write('\n')
 
     def writebond(self):
         self.output.write('Bonds\n\n')
-        for i in range (0, self.nmol):
-            for j in range(0, self.nbond):
-                cl = self.bondlist[j].split()
-                bondindex = 0 # claim bond index. 0 is an abnormal value.
-                ##################################################################
-                #
-                # The bond type is the FIRST char in each line in the file of bond.x
-                #
-                ##################################################################
-                bondindex = int(cl[0])
-                self.output.write('%8d' %(i*self.nbond+j+1)+' '+ '%4d'%bondindex \
-                +' '+'%7d' %(int(cl[1])+i*self.nm)+' '+'%7d' %(int(cl[2])+i*self.nm)+'\n')
+        num_prev_bond = 0
+        num_prev_atom = 0
+        for molecule in self.all_molecule_list:
+            nbond_per_chain , current_bond_list= self.load_bond( molecule[2] ) 
+            # number of atoms per chain, bond list of curent molecule (raw format)
+            natom_per_chain = self.load_chain(molecule[1]  )[0]
+            for mol_num_counter in range(0, molecule[0]): # loop over a single type of molecule
+                for j in range(0, nbond_per_chain ) :
+                    cl=  current_bond_list[j].split() # currentline
+                    bondindex = 0 # claim bond index. 0 is an abnormal value.
+                    ##################################################################
+                    #
+                    # The bond type is the FIRST char in each line in the file of bond.x
+                    #
+                    ##################################################################
+                    bondindex = int(cl[0])
+                    self.output.write('%8d' %(num_prev_bond+ mol_num_counter * nbond_per_chain +j+1)+' '\
+                    + '%4d'%bondindex +' '\
+                    +'%7d' %(int(cl[1])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[2])+num_prev_atom + mol_num_counter* natom_per_chain)+'\n')
+            num_prev_atom += molecule[0] * natom_per_chain
+            num_prev_bond += molecule[0] * nbond_per_chain
+
         self.output.write('\n')
+        print("Bonds written")
+
+
     def writeangle(self):
         self.output.write('Angles\n\n')
-        for i in range (0, self.nmol):
-            for j in range(0, self.nangle):
-                cl = self.anglelist[j].split()
-                angleindex = 0 # claim angle index. 0 is an abnormal value.
-                ############################################################
-                #
-                # read the angle type from angle.x.
-                #
-                ###############################################################
-                angleindex = int(cl[0])
-                self.output.write('%8d' %(i*self.nangle+j+1)+' '+ '%4d'%angleindex \
-                +' ' +'%7d' %(int(cl[1])+i*self.nm)+' '+'%7d' %(int(cl[2])+i*self.nm)+' '+'%7d' %(int(cl[3])+i*self.nm)+'\n')
+        num_prev_angle = 0
+        num_prev_atom = 0
+        for molecule in self.all_molecule_list:
+            nangle_per_chain , current_angle_list= self.load_angle( molecule[3] ) 
+            # number of atoms per chain, angle list of curent molecule (raw format)
+            natom_per_chain = self.load_chain(molecule[1]  )[0]
+    
+            for mol_num_counter in range(0, molecule[0]): # loop over a single type of molecule
+                for j in range(0, nangle_per_chain) :
+                    cl=  current_angle_list[j].split() # currentline
+                    angleindex = 0 # claim bond index. 0 is an abnormal value.
+            ##################################################################
+            #
+            # The angle type is the FIRST char in each line in the file of bond.x
+            #
+            ##################################################################
+                    angleindex = int(cl[0])
+                    self.output.write('%8d' %(num_prev_angle+ mol_num_counter * nangle_per_chain +j+1)+' '\
+                    + '%4d'%angleindex +' '\
+                    +'%7d' %(int(cl[1])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[2])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[3])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                   +'\n')
+            num_prev_atom += molecule[0] * natom_per_chain
+            num_prev_angle += molecule[0] * nangle_per_chain
+
         self.output.write('\n')
+        print("Angles written")
 
     def writedihedral(self):
         self.output.write('Dihedrals\n\n')
-        for i in range(0, self.nmol):
-            for j in range(0, self.ndihedral):
-                cl= self.dihedrallist[j].split()
-                dihedralindex = int(cl[0])
-                self.output.write('%8d' %(i*self.ndihedral+j+1)+' '+ '%4d'%dihedralindex \
-                +' ' +'%7d' %(int(cl[1])+i*self.nm)+' '+'%7d' %(int(cl[2])+i*self.nm)+' '+'%7d' %(int(cl[3])+i*self.nm)+'%7d' %(int(cl[4])+i*self.nm)+'\n')
+        num_prev_dihedral = 0
+        num_prev_atom = 0
+        for molecule in self.all_molecule_list:
+            ndihedral_per_chain , current_dihedral_list= self.load_dihedral( molecule[4] ) 
+            # number of atoms per chain, dihedral list of curent molecule (raw format)
+            natom_per_chain = self.load_chain(molecule[1]  )[0]
+            for mol_num_counter in range(0, molecule[0]): # loop over a single type of molecule
+                for j in range(0, ndihedral_per_chain) :
+                    cl=  current_dihedral_list[j].split() # currentline
+                    dihedralindex = 0 # claim index. 0 is an abnormal value.
+                    dihedralindex = int(cl[0])
+                    self.output.write('%8d' %(num_prev_dihedral+ mol_num_counter * ndihedral_per_chain +j+1)+' '\
+                    + '%4d'%dihedralindex +' '\
+                    +'%7d' %(int(cl[1])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[2])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[3])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[4])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'\n')
+            num_prev_atom += molecule[0] * natom_per_chain
+            num_prev_dihedral += molecule[0] * ndihedral_per_chain
+
         self.output.write('\n')
+        print("Dihedrals written")
+
+
+    def writeimproper(self):
+        self.output.write('Impropers\n\n')
+        num_prev_improper = 0
+        num_prev_atom = 0
+        for molecule in self.all_molecule_list:
+            nimproper_per_chain , current_improper_list= self.load_improper( molecule[5] ) 
+            # number of atoms per chain, improper list of curent molecule (raw format)
+            natom_per_chain = self.load_chain(molecule[1]  )[0]
+            for mol_num_counter in range(0, molecule[0]): # loop over a single type of molecule
+                for j in range(0, nimproper_per_chain) :
+                    cl=  current_improper_list[j].split() # currentline
+                    improperindex = 0 # claim index. 0 is an abnormal value.
+                    improperindex = int(cl[0])
+                    self.output.write('%8d' %(num_prev_improper+ mol_num_counter * nimproper_per_chain +j+1)+' '\
+                    + '%4d'%improperindex +' '\
+                    +'%7d' %(int(cl[1])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[2])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[3])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'%7d' %(int(cl[3])+num_prev_atom + mol_num_counter* natom_per_chain)+' '\
+                    +'\n')
+            num_prev_atom += molecule[0] * natom_per_chain
+            num_prev_improper += molecule[0] * nimproper_per_chain
+
+        self.output.write('\n')
+        print("Impropers written")
+
+

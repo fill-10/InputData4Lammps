@@ -65,68 +65,62 @@ class polymer:
 		self.f.close()
 	#
 	#
-	########################################################
-	# This function writes the bond information into file. #
-	#
-	def writebond(self,filename):
+        def writebond(self,filename):
 		self.f = open(filename, 'w+')
-		
 		preNatom= 0 #set up a counter to count the number of atoms in all previously covered blocks.
-		
-		
-		for i in range(0, len(self.block_list)):
-
+		#
+                for i in range(0, len(self.block_list)):
 			cbk = self.block_list[i] # current block
-
-			# bond linking the previous blocks, starting from the second block:
+			#
+                        # bond linking the previous blocks, starting from the second block:
 			if i>0:
 				pbk = self.block_list[i-1] # read the previous block
 				if cbk.prebond:
-					self.f.write(\
-                                        '%8d' %cbk.prebond[0] \
-					+ '%12d' %( (preNatom - pbk.Natom) + (pbk.monrepeat-1) * pbk.mon.Natom  + pbk.mon.last_index) \
-					+ '%12d' %(  preNatom                                                   + cbk.mon.first_index) \
-					+ '%8s' %pbk.mon.last.name \
-					+ '%8s' %cbk.mon.first.name \
-                                        + '\n')
+                                    # check:
+                                    if cbk.prebond[1] >0:
+                                        print("illegal block prebond:")
+                                        print(i)
+                                        return -1
+                                    #
+                                    tmp1bdindex = cbk.prebond[1]
+                                    tmp2bdindex = cbk.prebond[2]
+                                    tmp1bdname  = pbk.mon.beadlist[tmp1bdindex].name
+                                    tmp2bdname  = cbk.mon.beadlist[tmp2bdindex-1].name
+
+                                    self.f.write(\
+                                    '%8d' %cbk.prebond[0] \
+                                    + '%12d' %(  preNatom + tmp1bdindex +1 ) \
+                                    + '%12d' %(  preNatom + tmp2bdindex    ) \
+                                    + '%8s' %tmp1bdname \
+                                    + '%8s' %tmp2bdname \
+                                    + '\n')
 
 
 			for r in range(0, cbk.monrepeat):
 				# bonds inside one monomer (normal)
 				for j in range(0, len(cbk.mon.bondlist)):
                                     # regular bond inside monomer
-                                    if  (None not in cbk.mon.bondlist[j]) \
-                                    and not any(bn <= 0 for bn in cbk.mon.bondlist[j]) :
-					self.f.write(\
-					'%8d' %cbk.mon.bondlist[j][0] \
-					+ '%12d'   %(preNatom + r * cbk.mon.Natom + cbk.mon.bondlist[j][1]) \
-					+ '%12d' %(preNatom + r * cbk.mon.Natom + cbk.mon.bondlist[j][2]) \
-					+ '%8s' %cbk.mon.beadlist[cbk.mon.bondlist[j][1]-1].name \
-					+ '%8s' %cbk.mon.beadlist[cbk.mon.bondlist[j][2]-1].name \
-					+ '\n')
-				# bond connecting monomers
-                                # There is None or 0 in bond
-                                    elif r>0:
-                                        if not cbk.mon.bondlist[j][1]:
-                                            tmp1beadname = cbk.mon.last.name
-                                            tmp1beadindex = cbk.mon.last_index
-                                        else:
-                                            tmp1beadindex = -cbk.mon.bondlist[j][1]
-                                            tmp1beadname = cbk.mon.beadlist[tmp1beadindex-1].name
-                                        if not cbk.mon.bondlist[j][2]:
-                                            tmp2beadname = cbk.mon.first.name
-                                            tmp2beadindex = cbk.mon.first_index
-                                        else:
-                                            tmp2beadindex = -cbk.mon.bondlist[j][2]
-                                            tmp2beadname = cbk.mon.beadlist[-tmp2beadindex-1].name
-                                        
-					self.f.write(\
-					'%8d' %cbk.mon.bondlist[j][0] \
-                                        +'%12d' %(  preNatom + (r-1) * cbk.mon.Natom + tmp1beadindex ) \
-					+ '%12d' %(preNatom +  r    * cbk.mon.Natom + tmp2beadindex) \
-					+ '%8s' %tmp1beadname\
-					+ '%8s' %tmp2beadname \
-					+  '\n' )
+                                    tmp1bdindex = cbk.mon.bondlist[j][1]
+                                    tmp2bdindex = cbk.mon.bondlist[j][2]
+                                    #
+                                    if tmp1bdindex > 0:
+                                        tmp1bdname  = cbk.mon.beadlist[tmp1bdindex-1].name
+                                    else: # when bead1 is negative
+                                        tmp1bdindex += 1
+                                        tmp1bdname  = cbk.mon.beadlist[tmp1bdindex].name
+                                    #
+                                    tmp2bdname  = cbk.mon.beadlist[tmp2bdindex-1].name
+                                    #
+                                    if cbk.mon.bondlist[j][1] <0 and r ==0:
+                                        continue # skip the linking bond for the first monomer r = 0
+
+                                    self.f.write(\
+                                    '%8d' %cbk.mon.bondlist[j][0] \
+                                    + '%12d'   %(preNatom + r * cbk.mon.Natom + tmp1bdindex) \
+                                    + '%12d'   %(preNatom + r * cbk.mon.Natom + tmp2bdindex) \
+                                    + '%8s'    %tmp1bdname \
+                                    + '%8s' %tmp2bdname\
+                                    + '\n')
 
 			preNatom += cbk.Natom
 
@@ -136,105 +130,49 @@ class polymer:
 	#
 	def writeangle(self,filename):
             self.f=open(filename, 'w+')
-            preNatom= 0 #set up a counter to count the number of atoms in all previously covered blocks.
+            preNatom= 0 #set up a counter to count the number of atoms in all previous blocks.
             for i in range(0, len(self.block_list)):
                 cbk = self.block_list[i] # current block
-		################################################
-		##
-		## Write the angle linking the previous block.  #
-		##
-		################################################
-                
-                # translate:
-
-		if i>0:
+		#
+		if i>0:    # Write the angle linking the previous block.
                     pbk = self.block_list[i-1] # read the previous block
-                    if len(cbk.headangle_list)>0:
-                        for m in range(0, len(cbk.headangle_list) ):
+                    if cbk.headangle_list:
+                        for j in range(0, len(cbk.headangle_list) ):
                             #
+                            tmp1bdindex = cbk.headangle_list[j][1]
+                            tmp2bdindex = cbk.headangle_list[j][2]
+                            tmp3bdindex = cbk.headangle_list[j][3]
+                            tmp3bdname =  cbk.mon.beadlist[tmp3bdindex-1].name
                             # if the apex is in cbk
-                            if cbk.headangle_list[m][2]>0 :
-                                ## some translation:
-                                if not cbk.headangle_list[m][1]:
-                                    cbk.headangle_list[m][1] = -pbk.mon.last_index
+                            if cbk.headangle_list[j][2]>0 :
                                 #
-                                # trouble maker bead name... patched.
-                                tmp3bdnm =  cbk.mon.beadlist[cbk.headangle_list[m][3]-1].name
-                                
-                                # if only a single bead in the backbone of cbk monomer
-                                if cbk.mon.lmon ==0.0:
-                                    #
-                                    # if cbk has more than 1 monomer
-                                    if cbk.monrepeat >1 :
-                                    #
-                                        if cbk.headangle_list[m][2] == cbk.headangle_list[m][3]:
-                                            cbk.headangle_list[m][3] += cbk.mon.Natom
-                                        elif (not cbk.headangle_list[m][3]):
-                                            cbk.headangle_list[m][3] = cbk.mon.first_index + cbk.mon.Natom
-                                        else:
-                                            print("illegal angle constrain in")
-                                            print(self.block_list[i])
-                                            return -1
-
-                                    #
-                                    if (cbk.monrepeat ==1) :
-                                    # The very special case: bk1-bk2-bk3.
-                                    # Now doing bk2, bk2 only has one monomer and the monomer has the single-atom backbone.
-                                    # The bk2 has the headangle constrain. i.e. the only backbone atom is the apex of the angle.
-                                    # and there is a following block
-                                        if (i< len(self.block_list)-1): # if not the last block.
-                                            cbk.headangle_list[m][3] += cbk.Natom
-                                            tmp3bdnm = self.blocklist[i+1].mon.first.name
-                                        else:
-                                            print("illegal angle constrain in")
-                                            print(i)
-                                            return -1
-
-                                # write
-                                self.f.write(\
-                                '%8d'    %cbk.headangle_list[m][0] \
-				+'%12d'  %( (preNatom - pbk.Natom) + (pbk.monrepeat-1) * pbk.mon.Natom  - cbk.headangle_list[m][1] ) \
-		                + '%12d' %(  preNatom                                                   + cbk.headangle_list[m][2] ) \
-			        + '%12d' %(  preNatom                                                   + cbk.headangle_list[m][3] ) \
-				+ '%8s'  %pbk.mon.beadlist[-cbk.headangle_list[m][1]-1].name \
-				+ '%8s'  %cbk.mon.beadlist[ cbk.headangle_list[m][2]-1].name \
-				+ '%8s'  %tmp3bdnm \
-                                + '\n' )
-                                
-                                del tmp3bdnm
+                                tmp2bdname = cbk.mon.beadlist[tmp2bdindex - 1].name
+                                tmp1bdname = pbk.mon.beadlist[tmp1bdindex].name
+                                tmp1bdindex += 1
+                                #
+                                # special case: -4 1 1  and -1 2 2
+                                # very special
+                                if cbk.headangle_list[j][2] == cbk.headangle_list[j][3]:
+                                    tmp3bdindex += cbk.mon.Natom
                             #
                             # if apex bead in pbk:
-                            elif pbk.monrepeat >1: # the 3rd bead is None, 0, negative index
-                                # some translation
-                                if not cbk.headangle_list[m][2]:
-                                    cbk.headangle_list[m][2] = -pbk.mon.last_index
-                                if not cbk.headangle_list[m][1]:
-                                    cbk.headangle_list[m][1] = -pbk.mon.lastbut1_index
-                                #
-                                # trouble maker bead name... patched.
-                                tmp1bdnm =  pbk.mon.beadlist[-cbk.headangle_list[m][1]-1].name
-                                #
-                                if cbk.headangle_list[m][1] == cbk.headangle_list[m][2] and \
-                                pbk.mon.lmon == 0.0 :
-                                    cbk.headangle_list[m][1] += pbk.mon.Natom
-                                    if pbk.monrepeat <=1:  #single atom in pbk.mon and no repeat
-                                        #
-                                        # need to check p2bk...
-                                        print( 'illiegal head angular constrain in')
-                                        print( i )
-                                        return -1
-                                # write
-                                self.f.write(\
-                                '%8d' %cbk.headangle_list[m][0] \
-				+'%12d'  %( (preNatom - pbk.Natom) + (pbk.monrepeat-1) * pbk.mon.Natom  - cbk.headangle_list[m][1] ) \
-		                + '%12d' %( (preNatom - pbk.Natom) + (pbk.monrepeat-1) * pbk.mon.Natom  - cbk.headangle_list[m][2] ) \
-			        + '%12d' %(  preNatom                                                   + cbk.headangle_list[m][3] ) \
-				+ '%8s'  %tmp1bdnm \
-				+ '%8s'  %pbk.mon.beadlist[-cbk.headangle_list[m][2]-1].name \
-				+ '%8s'  %cbk.mon.beadlist[ cbk.headangle_list[m][3]-1].name \
-                                + '\n' )
-
-                                del tmp1bdnm
+                            if cbk.headangle_list[j][2]< 0 :
+                                tmp2bdname = pbk.mon.beadlist[tmp2bdindex].name
+                                tmp2bdindex += 1
+                                tmp1bdname = pbk.mon.beadlist[tmp1bdindex%pbk.mon.Natom].name
+                                tmp1bdindex += 1
+                            self.f.write(\
+                            '%8d'    %cbk.headangle_list[j][0] \
+                            + '%12d'  %(  preNatom + tmp1bdindex  ) \
+                            + '%12d' %(  preNatom + tmp2bdindex  ) \
+                            + '%12d' %(  preNatom + tmp3bdindex  ) \
+                            + '%8s'  %tmp1bdname \
+                            + '%8s'  %tmp2bdname \
+                            + '%8s'  %tmp3bdname \
+                            + '\n' )
+                        #
+                        try: del j
+                        except: pass
 
 
 		#################################################
@@ -249,31 +187,12 @@ class polymer:
                 # but no angle inside each block,
                 # then the headdih will pollute the following lines
                 # and cause error.
-                if len(cbk.mon.anglelist) == 0:
-                    preNatom += cbk.Natom
-                    continue
+                #if len(cbk.mon.anglelist) == 0:
+                #    preNatom += cbk.Natom
+                #    continue
                 #
                 #
                 ###
-
-
-                # translate :
-                for j in range(0, len(cbk.mon.anglelist) ):
-                    if cbk.mon.anglelist[j][2] ==0 or cbk.mon.anglelist[j][2] == None:
-                        cbk.mon.anglelist[j][2] = cbk.mon.last_index
-                        if cbk.mon.anglelist[j][1] ==0 or cbk.mon.anglelist[j][1] ==None:
-                            cbk.mon.anglelist[j][1] =  - cbk.mon.lastbut1_index
-                    elif cbk.mon.anglelist[j][1] ==0 or cbk.mon.anglelist[j][1] ==None:
-                            cbk.mon.anglelist[j][1] =  - cbk.mon.last_index
-                    if cbk.mon.anglelist[j][3] ==0 or cbk.mon.anglelist[j][3] == None:
-                        cbk.mon.anglelist[j][3] = cbk.mon.first_index
-                        # if cbk.mon.anglelist[j][3] != cbk.mon.anglelist[j][1]:
-                        #     print "illegal angle constrain in"
-                        #     return -1
-
-                del j
-                ## translate done
-                #
 
                 for r in range(0, cbk.monrepeat):
                 # From the second monomer, need to include the angles linking the current and previous monomers.
@@ -281,50 +200,36 @@ class polymer:
                     for j in range(0, len(cbk.mon.anglelist)):
                         try:
                             tmp1bdindex = cbk.mon.anglelist[j][1] 
-                            tmp1bdnm = cbk.mon.beadlist[tmp1bdindex-1].name
+                            tmp1bdname = cbk.mon.beadlist[tmp1bdindex-1].name
                         except:
                             pass
                         finally:
                             pass
                         try:
                             tmp2bdindex = cbk.mon.anglelist[j][2] 
-                            tmp2bdnm = cbk.mon.beadlist[tmp2bdindex-1].name
+                            tmp2bdname = cbk.mon.beadlist[tmp2bdindex-1].name
                         except:
                             pass
                         finally:
                             pass
                         try:
                             tmp3bdindex = cbk.mon.anglelist[j][3] 
-                            tmp3bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
+                            tmp3bdname = cbk.mon.beadlist[tmp3bdindex-1].name
                         except:
                             pass
                         finally:
                             pass
                         #
                         # if the bond is a monomer linking bond,  update:
-                        if any(bn <= 0 for bn in cbk.mon.anglelist[j]):
-                            if cbk.mon.anglelist[j][2] >0 and cbk.mon.anglelist[j][3]>0:
-                                tmp1bdindex = -cbk.mon.anglelist[j][1] - cbk.mon.Natom
-                                tmp1bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][1] -1 ].name
-                                if cbk.mon.anglelist[j][3] == cbk.mon.anglelist[j][2]:
-                                    tmp3bdindex = cbk.mon.anglelist[j][3] + cbk.mon.Natom
-                                elif cbk.mon.lmon==0: # additional check
-                                    tmp3bdindex = -cbk.mon.anglelist[j][3] +  ckb.mon.Natom
-                                    #tmp3bdnm    = ckb.mon.beadlist[ -cbk.mon.anglelist[j][3] -1]
-                                else: 
-                                    print("illegal angle constrain:")
-                                    print(" monomer does not have a single atom backbon. ")
-                                    print("intermonomer angle needs to be modified.")
-                                    return -1
-                            elif cbk.mon.anglelist[j][2]<0 and cbk.mon.anglelist[j][1]<0:
-                                tmp1bdindex  = -cbk.mon.anglelist[j][1] -2*cbk.mon.Natom
-                                tmp1bdnm     =  cbk.mon.beadlist[-cbk.mon.anglelist[j][1] -1 ].name
-                                tmp2bdindex  = -cbk.mon.anglelist[j][2] -  cbk.mon.Natom
-                                tmp2bdnm     =  cbk.mon.beadlist[-cbk.mon.anglelist[j][2] -1 ].name
-                            elif cbk.mon.anglelist[j][3] <0:
-                                tmp3bdindex  = -cbk.mon.anglelist[j][3] - cbk.mon.Natom
-                                tmp3bdnm  =  cbk.mon.beadlist[-cbk.mon.anglelist[j][3] -1 ].name
-                            # 2nd round translate done.
+                        #
+                        if cbk.mon.anglelist[j][2] >0 and cbk.mon.anglelist[j][1] <0:
+                            tmp1bdname  =  cbk.mon.beadlist[ tmp1bdindex ].name
+                            tmp1bdindex += 1
+                        if cbk.mon.anglelist[j][2] <0 and cbk.mon.anglelist[j][1] <0:
+                            tmp1bdname  =  cbk.mon.beadlist[tmp1bdindex%cbk.mon.Natom].name
+                            tmp1bdindex += 1
+                            tmp2bdname  =  cbk.mon.beadlist[tmp2bdindex%cbk.mon.Natom ].name
+                            tmp2bdindex += 1
 
                         #write:
                         if r==0 and any(bn <= 0 for bn in cbk.mon.anglelist[j]):
@@ -335,13 +240,8 @@ class polymer:
                         
                         elif r ==1:
                             # second monomer
-                            if cbk.mon.anglelist[j][2]<0 and cbk.mon.anglelist[j][1] <0\
-                            and cbk.mon.lmon ==0.0:
-                                continue
-                        elif  r>= cbk.monrepeat-1:
-                            # last monomer
-                            if cbk.mon.anglelist[j][3] == cbk.mon.anglelist[j][2] >0\
-                            and cbk.mon.lmon == 0.0 :
+                            if cbk.mon.anglelist[j][2]<0 and cbk.mon.anglelist[j][1]<0 \
+                            and cbk.mon.anglelist[j][1]/cbk.mon.Natom < -1:
                                 continue
                         #print(tmp1bdindex, tmp2bdindex, tmp3bdindex, tmp1bdnm, tmp2bdnm,tmp3bdnm)
                         self.f.write(\
@@ -349,9 +249,9 @@ class polymer:
                         + '%12d' %( preNatom + r * cbk.mon.Natom + tmp1bdindex) \
                         + '%12d' %( preNatom + r * cbk.mon.Natom + tmp2bdindex) \
                         + '%12d' %( preNatom + r * cbk.mon.Natom + tmp3bdindex) \
-                        + '%8s'  %tmp1bdnm \
-                        + '%8s'  %tmp2bdnm \
-                        + '%8s'  %tmp3bdnm \
+                        + '%8s'  %tmp1bdname \
+                        + '%8s'  %tmp2bdname \
+                        + '%8s'  %tmp3bdname \
                         + '\n')
                 #                
                 preNatom += cbk.Natom
@@ -362,7 +262,6 @@ class polymer:
             self.f= open(filename, 'w+')
             preNatom= 0 #set up a counter to count the number of atoms in all previously covered blocks.
             for i in range(0, len(self.block_list)):
-                print i
                 ###--------------------------###
                 ### block linking Dihedral   ###
                 ###--------------------------###
@@ -377,39 +276,23 @@ class polymer:
                             tmp4bdindex = cbk.headdih_list[m][4]
                             # translate
                             if cbk.headdih_list[m][3]<0:
-                                if pbk.mon.lmon == 0.0:
-                                    if pbk.monrepeat >2:
-                                        tmp1bdindex = -cbk.headdih_list[m][1] -3*pbk.mon.Natom
-                                        tmp2bdindex = -cbk.headdih_list[m][2] -2*pbk.mon.Natom
-                                        tmp3bdindex = -cbk.headdih_list[m][3] -  pbk.mon.Natom
-                                    else:
-                                        print("not supported, sorry.")
-                                elif pbk.mon.lastbut1_index == pbk.mon.first_index: # 2 beads in prev blk mon
-                                    if pbk.monrepeat >1:
-                                        tmp1bdindex = -cbk.headdih_list[m][1] -2*pbk.mon.Natom
-                                        tmp2bdindex = -cbk.headdih_list[m][2] -  pbk.mon.Natom
-                                        tmp3bdindex = -cbk.headdih_list[m][3] -  pbk.mon.Natom
-                                    else:
-                                        print("not supported, sorry.")
+                                tmp2bdindex += 1
+                                tmp3bdindex += 1
+                                tmp1bdindex += 1
+                            
                             elif cbk.headdih_list[m][2]<0:
-                                if pbk.mon.lmon == 0.0:
-                                    if pbk.monrepeat >1:
-                                        tmp1bdindex = -cbk.headdih_list[m][1] -2*pbk.mon.Natom
-                                        tmp2bdindex = -cbk.headdih_list[m][2] -1*pbk.mon.Natom
-                                    else:
-                                        print("not supported, sorry.")
-                                elif pbk.mon.lastbut1_index == pbk.mon.first_index: # 2 beads in prev blk mon
-                                    tmp1bdindex = -cbk.headdih_list[m][1] -  pbk.mon.Natom
-                                    tmp2bdindex = -cbk.headdih_list[m][2] -  pbk.mon.Natom
+                                tmp1bdindex += 1
+                                tmp2bdindex += 1
+                                if cbk.headdih_list[m][3] == cbk.headdih_list[m][4]:
+                                    tmp4bdindex += cbk.mon.Natom
 
                             elif cbk.headdih_list[m][1]<0:
-                                tmp1bdindex = -cbk.headdih_list[m][1] - pbk.mon.Natom
+                                tmp1bdindex += 1
+                                if ckb.headdih_list[m][2] == ckb.headdih_list[m][3]:
+                                    tmp3bdidnex += cbk.mon.Natom
+                                    if cbk.headdih_list[m][3] == cbk.headdih_list[m][4]:
+                                        tmp4bdindex += cbk.mon.Natom
 
-                            else:
-                                print("illegal head dihedral")
-                                print("block:")
-                                print(i)
-                                return -1
                             # write
                             self.f.write(\
                             '%8d'  %cbk.headdih_list[m][0] \
@@ -454,103 +337,59 @@ class polymer:
                     for j in range(0 , len(cbk.mon.dihedrallist)):
                         try:
                             tmp1bdindex = cbk.mon.dihedrallist[j][1] 
-                            tmp1bdnm = cbk.mon.beadlist[tmp1bdindex-1].name
+                            #tmp1bdnm = cbk.mon.beadlist[tmp1bdindex-1].name
                         except:
                             pass
                         finally:
                             pass
                         try:
                             tmp2bdindex = cbk.mon.dihedrallist[j][2] 
-                            tmp2bdnm = cbk.mon.beadlist[tmp2bdindex-1].name
+                            #tmp2bdnm = cbk.mon.beadlist[tmp2bdindex-1].name
                         except:
                             pass
                         finally:
                             pass
                         try:
                             tmp3bdindex = cbk.mon.dihedrallist[j][3] 
-                            tmp3bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
+                            #tmp3bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
                         except:
                             pass
                         finally:
                             pass
                         try:
                             tmp4bdindex = cbk.mon.dihedrallist[j][4] 
-                            tmp4bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
+                            #tmp4bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
                         except:
                             pass
                         finally:
                             pass
+
+                        #update temp bd index for negative beads
                         if any(bn <= 0 for bn in cbk.mon.dihedrallist[j]):
                             #
-                            # -2 2 3 4 
-                            # -3 2 2 2
-                            # -3 2 2 5 , in fact, illegal
                             # 
                             if cbk.mon.dihedrallist[j][2] >0: #-+++
-                                #
-                                if cbk.mon.dihedrallist[j][3] < 0:
-                                    print("illegal dihedral")
-                                    print("2nd bead >0, 3rd bead <0, illegal")
-                                    return -1
 
-                                elif cbk.mon.dihedrallist[j][1]<0 : # this if is redundant.
-                                    tmp1bdindex = -cbk.mon.dihedrallist[j][1] - cbk.mon.Natom
-                                    tmp1bdnm    = cbk.mon.beadlist[-cbk.mon.dihedrallist[j][1] - 1].name
-                                if cbk.mon.dihedrallist[j][2] == cbk.mon.dihedrallist[j][3]:
-                                    tmp3bdindex = cbk.mon.dihedrallist[j][3] + cbk.mon.Natom
-                                    if cbk.mon.dihedrallist[j][4] == cbk.mon.dihedrallist[j][3]:
-                                        tmp4bdindex = cbk.mon.dihedrallist[j][4] + 2* cbk.mon.Natom
-                                elif cbk.mon.dihedrallist[j][3] == cbk.mon.dihedrallist[j][4]:
-                                    tmp4bdindex = cbk.mon.dihedrallist[j][4] + cbk.mon.Natom
+                                if cbk.mon.dihedrallist[j][1]<0 : # this if is redundant.
+                                    tmp1bdnm += 1
                                     #
                             elif cbk.mon.dihedrallist[j][3] >0: # --++
-                                tmp2bdindex = -cbk.mon.dihedrallist[j][2] -    cbk.mon.Natom
-                                tmp2bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][2] -1 ].name
-                                if cbk.mon.dihedrallist[j][1] == cbk.mon.dihedrallist[j][2]: #<0
-                                    tmp1bdindex = -cbk.mon.dihedrallist[j][1] - 2* cbk.mon.Natom
-                                    tmp1bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][1] -1 ].name
-                                else:
-                                    tmp1bdindex = -cbk.mon.dihedrallist[j][1] -   cbk.mon.Natom
-                                    tmp1bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][1] -1 ].name
-                            elif cbk.mon.dihedrallist[j][4]>0: # ---+
-                                tmp3bdindex = -cbk.mon.dihedrallist[j][3] -    cbk.mon.Natom
-                                tmp3bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][3] -1 ].name
-                                #
-                                if cbk.mon.dihedrallist[j][3] == cbk.mon.dihedrallist[j][2]: #<0
-                                    tmp2bdindex = -cbk.mon.dihedrallist[j][2] - 2* cbk.mon.Natom
-                                    tmp2bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][2] -1 ].name
-                                    if cbk.mon.dihedrallist[j][1] == cbk.mon.dihedrallist[j][2]: #<0
-                                        tmp1bdindex = -cbk.mon.dihedrallist[j][1] - 3* cbk.mon.Natom
-                                        tmp1bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][1] -1 ].name
-                                    else:
-                                        tmp1bdindex = -cbk.mon.dihedrallist[j][1] -  2* cbk.mon.Natom
-                                        tmp1bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][1] -1 ].name
-
-                                else :
-                                    tmp2bdindex = -cbk.mon.dihedrallist[j][2] - cbk.mon.Natom
-                                    tmp2bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][2] -1 ].name
-                                    tmp1bdindex = -cbk.mon.dihedrallist[j][1] - cbk.mon.Natom
-                                    tmp1bdnm    = cbk.mon.beadlist[ -cbk.mon.anglelist[j][1] -1 ].name
-                            # dihedral has more restrict format than angle.
-                            # searching for the next monomer is not allowed.
-                            # 
-                            # In angle def, it can search in the next monomer,
-                            # in some special cases.
-                            # e.g. [1, -2,2,2] for lmon = 0.0,
-                            # but the recommended def should be [1,    -2, -2, 2]
-                            # bond need to be revised.
+                                tmp2bdindex += 1
+                                tmp1bdindex += 1
+                            elif cbk.mon.dihedrallist[j][4]>0: # ---+\
+                                tmp3bdindex += 1
+                                tmp2bdindex += 1
+                                tmp1bdindex += 1
+                        #
+                        #
                         # write:
                         if r == 0 and any(bn <= 0 for bn in cbk.mon.dihedrallist[j]):
                             continue
-                        elif r ==1:
-                            if cbk.mon.dihedrallist[j][2] <0 and cbk.mon.lmon == 0.0:
-                                continue
+                        if r ==1 and any(bn/cbk.mon.Natom < -1 for bn in cbk.mon.dihedrallist[j]): #--++
+                            continue
+                        if r ==2 and any(bn/cbk.mon.Natom < -2 for bn in cbk.mon.dihedrallist[j]): # ---+
+                            continue
 
-                        elif r ==2:
-                            if cbk.mon.anglelist[j][3]<0 and ckb.mon.lmon == 0.0 :
-                                continue
-
-                        else: pass
                         self.f.write(\
                         '%8d'  %cbk.mon.dihedrallist[j][0] \
                         + '%12d' %( preNatom + r * cbk.mon.Natom + tmp1bdindex) \
@@ -560,3 +399,147 @@ class polymer:
                         + '\n')
                 preNatom += cbk.Natom
             self.f.close()
+       
+        def writeimproper(self, filename):
+            self.f= open(filename, 'w+')
+            preNatom= 0 #set up a counter to count the number of atoms in all previously covered blocks.
+            for i in range(0, len(self.block_list)):
+                ###--------------------------###
+                ### block linking improper   ###
+                ###--------------------------###
+                cbk = self.block_list[i]
+                if i > 0:
+                    pbk = self.block_list[i-1]
+                    if cbk.headimproper_list:
+                        for m in range(0, len(cbk.headimproper_list) ):
+                            tmp1bdindex = cbk.headimproper_list[m][1]
+                            tmp2bdindex = cbk.headimproper_list[m][2]
+                            tmp3bdindex = cbk.headimproper_list[m][3]
+                            tmp4bdindex = cbk.headimproper_list[m][4]
+                            # translate
+                            if cbk.headimproper_list[m][3]<0: #---+
+                                tmp2bdindex += 1
+                                tmp3bdindex += 1
+                                tmp1bdindex += 1
+                            
+                            elif cbk.headimproper_list[m][2]<0: #--++
+                                tmp1bdindex += 1
+                                tmp2bdindex += 1
+                                if cbk.headimproper_list[m][3] == cbk.headimproper_list[m][4]:
+                                    tmp4bdindex += cbk.mon.Natom
+
+                            elif cbk.headimproper_list[m][1]<0: #-+++
+                                tmp1bdindex += 1
+                                if ckb.headimproper_list[m][2] == ckb.headimproper_list[m][3]:
+                                    tmp3bdidnex += cbk.mon.Natom
+                                    if cbk.headimproper_list[m][3] == cbk.headimproper_list[m][4]:
+                                        tmp4bdindex += cbk.mon.Natom
+
+                            # write
+                            self.f.write(\
+                            '%8d'  %cbk.headimproper_list[m][0] \
+                            + '%12d' %( preNatom + tmp1bdindex) \
+                            + '%12d' %( preNatom + tmp2bdindex) \
+                            + '%12d' %( preNatom + tmp3bdindex) \
+                            + '%12d' %( preNatom + tmp4bdindex) \
+                            + '\n')
+                    try:
+                        del tmp1bdindex
+                    except:
+                        pass
+                    try:
+                        del tmp2dindex
+                    except:
+                        pass
+                    try:
+                        del tmp3bdindex
+                    except:
+                        pass
+                    try:
+                        del tmp1bdindex
+                    except:
+                        pass
+                ###--------------------------###
+                ### improper in each block   ###
+                ###--------------------------###
+                ###
+                # This IF is a must.
+                # There is the case:
+                # only block.headimproper_list has improper,
+                # but no improper inside each block,
+                # then the headimproper will pollute the following lines
+                # and cause error.
+                if len(cbk.mon.improperlist) == 0:
+                    preNatom += cbk.Natom
+                    continue
+                #
+                #
+                ###
+                for r in range(0, cbk.monrepeat):
+                    for j in range(0 , len(cbk.mon.improperlist)):
+                        try:
+                            tmp1bdindex = cbk.mon.improperlist[j][1] 
+                            #tmp1bdnm = cbk.mon.beadlist[tmp1bdindex-1].name
+                        except:
+                            pass
+                        finally:
+                            pass
+                        try:
+                            tmp2bdindex = cbk.mon.improperlist[j][2] 
+                            #tmp2bdnm = cbk.mon.beadlist[tmp2bdindex-1].name
+                        except:
+                            pass
+                        finally:
+                            pass
+                        try:
+                            tmp3bdindex = cbk.mon.improperlist[j][3] 
+                            #tmp3bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
+                        except:
+                            pass
+                        finally:
+                            pass
+                        try:
+                            tmp4bdindex = cbk.mon.improperlist[j][4] 
+                            #tmp4bdnm = cbk.mon.beadlist[tmp3bdindex-1].name 
+                        except:
+                            pass
+                        finally:
+                            pass
+
+                        #update temp bd index for negative beads
+                        if any(bn <= 0 for bn in cbk.mon.improperlist[j]):
+                            #
+                            # 
+                            if cbk.mon.improperlist[j][2] >0: #-+++
+
+                                if cbk.mon.improperlist[j][1]<0 : # this if is redundant.
+                                    tmp1bdnm += 1
+                                    #
+                            elif cbk.mon.improperlist[j][3] >0: # --++
+                                tmp2bdindex += 1
+                                tmp1bdindex += 1
+                            elif cbk.mon.improperlist[j][4]>0: # ---+\
+                                tmp3bdindex += 1
+                                tmp2bdindex += 1
+                                tmp1bdindex += 1
+                        #
+                        #
+                        # write:
+                        if r == 0 and any(bn <= 0 for bn in cbk.mon.improperlist[j]):
+                            continue
+                        if r ==1 and any(bn/cbk.mon.Natom < -1 for bn in cbk.mon.improperlist[j]): #--++
+                            continue
+                        if r ==2 and any(bn/cbk.mon.Natom < -2 for bn in cbk.mon.improperlist[j]): # ---+
+                            continue
+
+                        self.f.write(\
+                        '%8d'  %cbk.mon.improperlist[j][0] \
+                        + '%12d' %( preNatom + r * cbk.mon.Natom + tmp1bdindex) \
+                        + '%12d' %( preNatom + r * cbk.mon.Natom + tmp2bdindex) \
+                        + '%12d' %( preNatom + r * cbk.mon.Natom + tmp3bdindex) \
+                        + '%12d' %( preNatom + r * cbk.mon.Natom + tmp4bdindex) \
+                        + '\n')
+                preNatom += cbk.Natom
+            self.f.close()
+
+
