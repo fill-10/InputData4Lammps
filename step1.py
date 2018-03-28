@@ -7,8 +7,6 @@ from class_monomer import monomer
 from class_block import block
 from class_polymer import polymer
 from class_data import data
-#from class_bond import Bond
-#from class_angle import Angle
 from class_packmolgen import packmolgen
 import subprocess
 
@@ -46,26 +44,18 @@ beadthread = [b1, b2, b1p, b4, b5]
 
 m1 = monomer('M1',1 ,beadthread)
 
-# update topology. 
-# monomerobject.update_first(beadindex)
-# also available for last, second, lastbut1
-m1.update_first(2)
-m1.update_second(2)
-m1.update_last(2)
-m1.update_lastbut1(2)
-
 # bond numbers are consistent to Fatemeh's note
 # bondlist =[ [bondtype, bead1_index, bead2_index],... ] nomer1
 m1.bondlist = [[2,1,2],[2,2,3],[5,3,4],[6,4,5]]
-m1linkbond = [1, None,2]
-m1.bondlist.append(m1linkbond)
+m1linkbond = [1, -4 ,2]
+m1.bondlist.insert(0,m1linkbond)
 
 
 # anglelist = [ [angletype, bead1, beadapex, bead3] ]
 m1.anglelist = [[5, 2, 3, 4],[6, 3, 4, 5]]
-m1linkangles= [[1,None,2,None]]
+m1linkangles= [[1,-9,-4 ,2]]
 m1.anglelist += m1linkangles
-m1.dihedrallist = [[6, -1, -2, 2, 1], [7, 1,2,3,4] ]
+m1.dihedrallist = [[3, -1, -2, 2, 1], [4, 1,2,3,4] ]
 
 
 # NOTE 3: define block
@@ -82,24 +72,25 @@ bk1.prebond = None
 # NOTE 4: define other blocks
 #########################
 m2 = monomer('m2', 2, [b3])
-m2.bondlist = [ [4,None,1] ]
-m2.anglelist =[ [4,None, 1, None] ]
+m2.bondlist = [ [4,-1 ,1] ]
+m2.anglelist =[ [4,-2, -1, 1] ]
 
 m2.dihedrallist= []
 
 m2linkvector = [1.0, 0.0, 0.0]
 bk2 = block('bk2', m2, 152, m2linkvector)
-bk2.prebond = [ 3, None,1]
+bk2.prebond = [ 3, -4,1]
 bk2.prelinkvector = [1.0, 0.0, 0.0]
-bk2.headangle_list = [[2, None, None, 1], [3, None, 1, 1] ]
-bk2.headdih_list = [[1, -2, -2, -2, 1]]
+bk2.headangle_list = [[2, -9, -4, 1], [3,-4 , 1, 1] ]
+bk2.headdih_list = [[1, -14, -9, -2, 1]]
+bk2.headimproper_list=[[1, -10, -9, -4 , 1]]
 
 #########################
 bk3 = block('bk3', m1, 8, m1linkvector)
-bk3.prebond = [3, None, 2]
+bk3.prebond = [3, -1, 2]
 bk3.prelinkvector = [1.0, 0.0, 0.0]
-bk3.headangle_list = [ [ 3, None, None, 2], [2, None, 2, 2] ]
-bk3.headdih_list = [[2, -1, -1, 2, 1]]
+bk3.headangle_list = [ [ 3, -2, -1, 2], [2, -1, 2, 2] ]
+bk3.headdih_list = [[2, -2, -1, 2, 1]]
 
 
 # NOTE 5: define polymer chain, polymer( name, blocklist )
@@ -128,37 +119,43 @@ p1.writeangle('angle.x')
 
 p1.writedihedral('dihedral.x')
 
+p1.writeimproper('improper.x')
+
 
 # prepare packmol input file
 # NOTE: One can set box dimensions here,  for example.
 box = [400., 400., 400.]
 # NOTE: components and numbers
-components=[['chain1.xyz',3], ['OH.xyz', 48], ['W.xyz', 10]]
+all_molecules = [   {'chain': 'chain1.xyz','bond': 'bond.x', 'angle': 'angle.x', 'Natom' : 3 , 'dihedral': 'dihedral.x', 'improper': 'improper.x' },  \
+                    { 'chain': 'OH.xyz', 'Natom':48} ,\
+                    {'chain':'W.xyz', 'Natom': 10 }   ]
+
+
+#components=[['chain1.xyz',3], ['OH.xyz', 48], ['W.xyz', 10]]
 
 # packmolAEM.inp is the packmol input
-pack = packmolgen('packmolAEM.inp', box, components)
+pack = packmolgen( boxsize = box, molecules = all_molecules, filetype = 'xyz' )
 
 pack.packmolinpgen('MixtureAEM.xyz')
 
 # run packmol
 # NOTE: modify the packmol directory here
-subprocess.call('/opt/packmol/packmol<packmolAEM.inp', shell = True)
+subprocess.call('/opt/packmol/packmol<packmol.inp', shell = True)
 
 # run step2
 
 totalbeadlist = [b1, b2, b3, b4, b5, b6, b7]
-totalanglelist = []
 
 # initialize d1
 # (output filename, xyz of mixture, xyz of single chain, bond per chain, angle per chain, packmol input)
-d1 = data('SEBS1TMA_random_DPD.data')
+d1 = data('SEBS1TMA_DPD.data')
 
 d1.load_mixture('MixtureAEM.xyz')
-d1.load_chain('chain1.xyz')
-d1.load_nmol('packmolAEM.inp')
-d1.load_bond('bond.x')
-d1.load_angle('angle.x')
-d1.load_dihedral('dihedral.x')
+
+
+d1.load_all_molecules(*all_molecules)
+
+
 
 
 d1.xlo = 0.
@@ -174,7 +171,8 @@ d1.tatom = 7
 d1.tbond = 6
 d1.tangle = 6
 d1.tdihedral = 4
-#d1.timproper = 0
+d1.timproper = 1
+d1.update_totalnumber()
 
 d1.writehead()
 
@@ -185,3 +183,4 @@ d1.writeatom(totalbeadlist)
 d1.writebond()
 d1.writeangle()
 d1.writedihedral()
+d1.writeimproper()

@@ -5,17 +5,33 @@ import subprocess
 
 
 class packmolgen:
-	def __init__(self, filename, boxsize, components, filetype='xyz', tolerance= 0.1):
-		self.xlo = 0.
+	def __init__(self, **kwargs):
+	        self.xlo = 0.
 		self.ylo = 0.
 		self.zlo = 0.
-		self.xhi = boxsize[0]
-		self.yhi = boxsize[1]
-		self.zhi = boxsize[2]
-		self.tol = tolerance
-		self.ftype = filetype
-		self.allcomp = components
-		self.inpfilename = filename
+		self.xhi = 100.
+		self.yhi = 100.
+		self.zhi = 100.
+		self.tol = 0.1
+		self.ftype = 'xyz'
+		self.allcomp = []
+		self.inpfilename = 'packmol.inp'
+                for kw in kwargs.items():
+                    if kw[0] == 'boxsize':
+                        self.xhi = kw[1][0]
+                        self.yhi = kw[1][1]
+                        self.zhi = kw[1][2]
+                    if kw[0] == 'molecules':
+                        self.molconfig = kw[1]
+                        for molecule in self.molconfig:
+                            self.allcomp.append([molecule['chain'], molecule['Natom']])
+                    if kw[0] == 'tolerance':
+                        self.tol = kw[1]
+                    if kw[0] == 'filetype':
+                        self.ftype = kw[1]
+                    if kw[0] == 'inputfilename':
+                        self.inpfilename = kw[1]
+
 	
 	def packmolinpgen(self, outputmixturefilename):
 		self.packmolf = open(self.inpfilename, 'w+')

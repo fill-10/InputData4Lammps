@@ -3,8 +3,6 @@
 # No dendrimers, no rings.
 
 from class_monomer import monomer
-#from class_bond import Bond
-#from class_angle import Angle
 
 class block:
 	def __init__(self, blockname, monomerobject, repeating, monomerlinkvector):
@@ -28,16 +26,15 @@ class block:
 		# Set up two attributes to store the pre and suc bonds linking adjacent blocks.
 		# This is the inter-block bond
 		self.prebond = None
-		self.sucbond = None # This sucbond (succeed bond) is not used in linear polymers.
 
                 self.prelinkvector = [1.0,0.0,0.0]
-
 
 
 		# Angle information, the two attributes should be the angle objects
 		# These are the inter-block angles
 		self.headangle_list = []
                 self.headdih_list = []
+                self.headimproper_list = []
 
 
 		# check angle
