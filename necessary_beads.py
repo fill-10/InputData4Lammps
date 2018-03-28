@@ -1,6 +1,8 @@
 # This file is the bead library.
 # Define all the beads here.
-
+# Format:
+# bead(name, coordinates, typenumber)
+#
 from class_bead import bead
 
 b1 = bead('S', [0., 1.0, 0.],2)
