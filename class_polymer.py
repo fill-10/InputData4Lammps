@@ -66,16 +66,16 @@ class polymer:
 	#
 	#
         def writebond(self,filename):
-		self.f = open(filename, 'w+')
-		preNatom= 0 #set up a counter to count the number of atoms in all previously covered blocks.
-		#
+                self.f = open(filename, 'w+')
+                preNatom= 0 #set up a counter to count the number of atoms in all previously covered blocks.
+                #
                 for i in range(0, len(self.block_list)):
-			cbk = self.block_list[i] # current block
+                        cbk = self.block_list[i] # current block
 			#
                         # bond linking the previous blocks, starting from the second block:
-			if i>0:
-				pbk = self.block_list[i-1] # read the previous block
-				if cbk.prebond:
+                        if i>0:
+                                pbk = self.block_list[i-1] # read the previous block
+                                if cbk.prebond:
                                     # check:
                                     if cbk.prebond[1] >0:
                                         print("illegal block prebond:")

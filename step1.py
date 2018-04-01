@@ -19,6 +19,12 @@ beadthread = [b1, b2, b1p, b4, b5]
 
 m1 = monomer('M1',1 ,beadthread)
 
+# must update
+# the first and last
+# this will determine the deltaV and writexyz
+m1.update_first(2)
+m1.update_last(2)
+
 # bond numbers are consistent to Fatemeh's note
 # bondlist =[ [bondtype, bead1_index, bead2_index],... ] nomer1
 m1.bondlist = [[2,1,2],[2,2,3],[5,3,4],[6,4,5]]
@@ -28,8 +34,8 @@ m1.bondlist.insert(0,m1linkbond)
 
 # anglelist = [ [angletype, bead1, beadapex, bead3] ]
 m1.anglelist = [[5, 2, 3, 4],[6, 3, 4, 5]]
-m1linkangles= [[1,-9,-4 ,2]]
-m1.anglelist += m1linkangles
+m1linkangles= [1,-9,-4 ,2]
+m1.anglelist.insert(0, m1linkangles)
 m1.dihedrallist = [[3, -1, -2, 2, 1], [4, 1,2,3,4] ]
 
 
