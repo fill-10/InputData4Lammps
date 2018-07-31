@@ -106,7 +106,6 @@ class polymer:
                                     if tmp1bdindex > 0:
                                         tmp1bdname  = cbk.mon.beadlist[tmp1bdindex-1].name
                                     else: # when bead1 is negative
-                                        tmp1bdindex += 1
                                         tmp1bdname  = cbk.mon.beadlist[tmp1bdindex].name
                                     #
                                     tmp2bdname  = cbk.mon.beadlist[tmp2bdindex-1].name
