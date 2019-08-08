@@ -1,6 +1,6 @@
 # DPDLammpsInput
 
-This is a very simple tool to generate the lammps input data file for md/dpd simulations.
+This is a very simple tool to generate the lammps input data file for DPD simulations.
 
 User defines everything. All constrains are defined manually.
 
@@ -22,11 +22,13 @@ Existing problems:
 
 Masses are defined as 1.0 in the lammps data file. Please update masses in lammps input script.
 
-In xyz files, atom names are stored as real names but not the numbers as in lammps. 
+In xyz files, atom names are stored as real names but not the numbers as in lammps.
 
 This is for the visualization purposes.
 
 ############
-Have fun!
+
+Please cite: 
+Luo X.; Paddison S.J, DPD simulations of anion exchange membrane: The effect of an alkyl spacer on the hydrated morphology, Solid State Ionics 339, 115012
 
 X. Luo
