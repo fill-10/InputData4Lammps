@@ -5,25 +5,24 @@
 from class_monomer import monomer
 
 class block:
-    def __init__(self, blockname, monomerobject, repeating, monomerlinkvector):
-        self.name = blockname
-        self.mon = monomerobject
-        self.monrepeat = repeating
-        self.Natom = monomerobject.Natom * repeating
+    def __init__(self, monomerobj, repeat, monlinkvector):
+        self.mon = monomerobj
+        self.monrep = repeat
+        self.Natom = self.mon.Natom * self.monrep
 
-        # The monlinkbond is the bond object linking the monomers inside the block. 
-        # This is not the bond linking the blocks in the polymer
-        self.monlinkvector = monomerlinkvector
+        # self.monlink is mon-> mon 
+        # It is not the bond linking the blocks.
+        self.monlink = monlinkvector
 
         self.deltaV = [\
-        self.mon.deltaV[0]*self.monrepeat +self.monlinkvector[0]* (self.monrepeat-1),\
-        self.mon.deltaV[1]*self.monrepeat +self.monlinkvector[1]* (self.monrepeat-1),\
-        self.mon.deltaV[2]*self.monrepeat +self.monlinkvector[2]* (self.monrepeat-1) ]
+        self.mon.deltaV[0]*self.monrep +self.monlink[0]* (self.monrep-1), \
+        self.mon.deltaV[1]*self.monrep +self.monlink[1]* (self.monrep-1), \
+        self.mon.deltaV[2]*self.monrep +self.monlink[2]* (self.monrep-1) ]
 
         # Set up two attributes to store the pre and suc bonds linking adjacent blocks.
         # This is the inter-block bond
-        self.prebond = None
-        self.prelinkvector = [1.0,0.0,0.0]
+        self.prebond = []
+        self.prelinkvector = [0.0,0.0,0.0]
         # Angle information, the two attributes should be the angle objects
         # These are the inter-block angles
         self.headangle_list = []
