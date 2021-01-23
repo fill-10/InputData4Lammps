@@ -29,6 +29,8 @@ This is for the visualization purposes.
 ############
 
 Please cite: 
-Luo X.; Paddison S.J, DPD simulations of anion exchange membrane: The effect of an alkyl spacer on the hydrated morphology, Solid State Ionics 339, 115012
+Luo X.; Paddison S.J, DPD simulations of anion exchange membrane: The effect of an alkyl spacer on the hydrated morphology, Solid State Ionics, 2019, 339, 115012
+Luo X.; Liu, H.; Bae, C.; Tuckerman, M.E.; Hickner, M.A.; Paddison S.J., Mesoscale Simulations of Quaternary Ammonium-Tethered Triblock Copolymers: Effects of the Degree of Functionalization and Styrene Content, The Journal of Physical Chemistry C, 2020, 124 (30), 16315-16323
+
 
 X. Luo
