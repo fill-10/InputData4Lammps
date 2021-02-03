@@ -36,7 +36,7 @@ m1.bondlist.insert(0,m1linkbond)
 m1.anglelist = [[5, 1, 2, 3],[6, 2, 3, 4]]
 m1linkangles= [1,-9,-4 ,1]
 m1.anglelist.insert(0, m1linkangles)
-m1.dihedrallist = [[3, -1, -2, 2, 1], [4, 1,2,3,4] ]
+m1.dihedrallist = [[3, -1, -2, 1, 0], [4, 0,1,2,3] ]
 
 
 # NOTE 3: define block
@@ -71,7 +71,7 @@ bk3 = block( m1, 8, m1linkvector)
 bk3.prebond = [ [3, -1, 1] ]
 bk3.prelinkvector = [1.0, 0.0, 0.0]
 bk3.headangle_list = [ [ 3, -2, -1, 1], [2, -1, 1, 6] ]
-bk3.headdih_list = [[2, -2, -1, 2, 1]]
+bk3.headdih_list = [[2, -2, -1, 1, 0]]
 
 
 # NOTE 5: define polymer chain, polymer( name, blocklist )
