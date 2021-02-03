@@ -9,7 +9,6 @@ import subprocess
 box = [400., 400., 400.]
 # NOTE: components and numbers
 all_molecules = [   {'chain': 'chain1.xyz','bond': 'bond.x', 'angle': 'angle.x', 'Natom' : 3 , 'dihedral': 'dihedral.x', 'improper': 'improper.x' },  \
-                    { 'chain': 'OH.xyz', 'Natom':48} ,\
                     {'chain':'W.xyz', 'Natom': 10 }   ]
 
 
