@@ -22,7 +22,9 @@ In xyz files, atom names are stored as real names but not the numbers as in lamm
 
 ############
 
-Related publications: 
+Related publications:
+
+[ Please cite ]
 
 [1] Luo X.; Paddison S.J, DPD simulations of anion exchange membrane: The effect of an alkyl spacer on the hydrated morphology, Solid State Ionics, 2019, 339, 115012
 
